@@ -71,12 +71,39 @@ const Home = () => {
           }
         }
 
+        @keyframes logoIntro {
+          0% {
+            transform: scale(3);
+            opacity: 0;
+          }
+          50% {
+            opacity: 1;
+          }
+          100% {
+            transform: scale(1);
+            opacity: 1;
+          }
+        }
+
+        @keyframes logoPulse {
+          0%, 100% {
+            transform: scale(1);
+          }
+          50% {
+            transform: scale(1.1);
+          }
+        }
+
         .animate-bounce-slow {
           animation: bounce 2s infinite;
         }
 
         .animate-pulse-slow {
           animation: pulse 2s infinite;
+        }
+
+        .logo-intro {
+          animation: logoIntro 2s ease-out forwards, logoPulse 3s ease-in-out 2s infinite;
         }
 
         .snowflake {
@@ -89,6 +116,11 @@ const Home = () => {
           z-index: 1000;
           animation-timing-function: linear;
           animation-iteration-count: infinite;
+        }
+
+        .content-delayed {
+          opacity: 0;
+          animation: fadeInUp 1s ease-out 1.5s forwards;
         }
       `}</style>
 
@@ -122,30 +154,29 @@ const Home = () => {
 
         {/* Content */}
         <div className="relative z-10 text-center px-4">
-          <h1
-            className="text-6xl md:text-8xl font-bold text-white mb-6"
+          {/* Logo - appears first with intro animation */}
+          <img 
+            src="/namiral1.png"
+            alt="Namiral Logo"
+            className="mx-auto mb-6 h-48 w-auto logo-intro"
             style={{
-                animation: 'fadeInUp 1s ease-out',
-                textShadow: '0 4px 20px rgba(0,0,0,0.3)'
+              filter: 'invert(1) brightness(200%)'
             }}
-            >
-            Welcome to Namiral
-            </h1>
+          />
 
-            {/* Logo under the heading */}
-            <img 
-                src="/namiral1.png"
-                alt="Namiral Logo"
-                className="mx-auto mb-6 h-48 w-auto"   // <-- increased size
-                style={{
-                    animation: 'fadeInUp 1s ease-out 0.2s both',
-                    filter: 'invert(1) brightness(200%)'
-                }}
-            />
-          <p
-            className="text-xl md:text-3xl text-white/95 mb-12 font-light tracking-wide"
+          <h1
+            className="text-6xl md:text-8xl font-bold text-white mb-6 content-delayed"
             style={{
-              animation: 'fadeInUp 1s ease-out 0.3s both'
+              textShadow: '0 4px 20px rgba(0,0,0,0.3)'
+            }}
+          >
+            Welcome to Namiral
+          </h1>
+
+          <p
+            className="text-xl md:text-3xl text-white/95 mb-12 font-light tracking-wide content-delayed"
+            style={{
+              animationDelay: '1.7s'
             }}
           >
             To get our services, explore our pages...
@@ -153,9 +184,9 @@ const Home = () => {
 
           {/* Navigation Buttons */}
           <div 
-            className="flex flex-wrap gap-4 justify-center"
+            className="flex flex-wrap gap-4 justify-center content-delayed"
             style={{
-              animation: 'fadeInUp 1s ease-out 0.6s both'
+              animationDelay: '2s'
             }}
           >
             <Link 
@@ -171,16 +202,6 @@ const Home = () => {
               Learn More
             </Link>
           </div>
-
-          {/* Scroll Down Arrow */}
-          {/* <div
-            className="mt-12 animate-bounce-slow"
-            style={{
-              animation: 'fadeInUp 1s ease-out 0.9s both, bounce 2s infinite 1.9s'
-            }}
-          >
-            <ChevronDown className="w-16 h-16 text-white mx-auto" strokeWidth={2} />
-          </div> */}
         </div>
       </section>
 
