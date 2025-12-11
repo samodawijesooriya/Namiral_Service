@@ -3,6 +3,7 @@ import { ChevronDown } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import Navbar from '../components/Navbar';
 import Footer from '../components/Footer';
+import CommunityChat from '../components/CommunityChat';
 
 const Home = () => {
   return (
@@ -204,6 +205,8 @@ const Home = () => {
           </div>
         </div>
       </section>
+
+      <CommunityChat />
 
       <Footer />
     </div>

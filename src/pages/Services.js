@@ -1,5 +1,5 @@
 import React from 'react';
-import { Heart, Code, Truck, HardHat, UtensilsCrossed } from 'lucide-react';
+import { Heart, Code, Truck, HardHat, UtensilsCrossed, Dumbbell } from 'lucide-react';
 import Navbar from '../components/Navbar';
 import Footer from '../components/Footer';
 import ServiceCard from '../components/ServiceCard';
@@ -9,7 +9,8 @@ const Services = () => {
     {
       icon: Heart,
       title: "Love Services",
-      items: ["Love letters", "Surprise planning", "Gift ideas", "Romantic getaways", "Anniversary celebrations"]
+      items: ["How to get a girl", "How to love & care", "Surprise ideas", "Ways to impress", "Make her happy"],
+      link: "/love-guide" // Add link to love guide page
     },
     {
       icon: Code,
@@ -30,6 +31,12 @@ const Services = () => {
       icon: UtensilsCrossed,
       title: "Food Services",
       items: ["Catering", "Homemade meals", "Snacks delivery", "Party planning", "Custom menus"]
+    },
+    {
+      icon: Dumbbell,
+      title: "Gym Instructions",
+      items: ["Workout techniques", "Exercise form", "Training plans", "Nutrition guidance", "Fitness goals"],
+      link: "/gym-instructions"
     }
   ];
 
@@ -69,6 +76,7 @@ const Services = () => {
                 title={service.title}
                 items={service.items}
                 index={index}
+                link={service.link}
               />
             ))}
           </div>
