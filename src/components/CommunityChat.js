@@ -1,56 +1,19 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { Send, MessageCircle, X } from 'lucide-react';
+import { Send, MessageCircle, X, Loader2 } from 'lucide-react';
 
 const CommunityChat = () => {
   const [messages, setMessages] = useState([]);
   const [newMessage, setNewMessage] = useState('');
   const [isOpen, setIsOpen] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
   const messagesEndRef = useRef(null);
 
-  // Auto-reply responses based on user input
-  const getAutoReply = (userMessage) => {
-    const msg = userMessage.toLowerCase().trim();
-    
-    // Check for specific keywords and return appropriate responses
-    if (msg.includes('hello') || msg.includes('hi') || msg.includes('hey')) {
-      return 'Hello! Welcome to our community. How can I help you today?';
-    } else if (msg.includes('service') || msg.includes('services')) {
-      return 'We offer a variety of community services. Check out our Services page for more details!';
-    } else if (msg.includes('event') || msg.includes('events')) {
-      return 'Visit our Events page to see upcoming community events and activities!';
-    } else if (msg.includes('contact') || msg.includes('reach')) {
-      return 'You can reach us through the Contact page. We\'d love to hear from you!';
-    } else if (msg.includes('help') || msg.includes('support')) {
-      return 'I\'m here to help! You can ask about our services, events, or how to contact us.';
-    } else if (msg.includes('thank') || msg.includes('thanks')) {
-      return 'You\'re welcome! Feel free to ask if you need anything else.';
-    } else if (msg.includes('bye') || msg.includes('goodbye')) {
-      return 'Goodbye! Have a great day and hope to see you around!';
-    } else if (msg.includes('gym') || msg.includes('fitness')) {
-      return 'Check out our Gym Instructions page for fitness tips and guidance!';
-    } else if (msg.includes('about')) {
-      return 'Learn more about our community on the About page!';
-    } else {
-      // Default responses for unmatched messages
-      const defaultReplies = [
-        'Thanks for your message! How can I assist you further?',
-        'Interesting! Tell me more about what you\'re looking for.',
-        'I\'m here to help with information about our community services and events!',
-        'Feel free to browse our website or ask me specific questions about our services.',
-      ];
-      return defaultReplies[Math.floor(Math.random() * defaultReplies.length)];
-    }
-  };
-
-  // Scroll to bottom of messages
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   };
 
-  // Send message and get auto-reply
-  const sendMessage = async (e) => {
-    e.preventDefault();
-    if (!newMessage.trim()) return;
+  const sendMessage = async () => {
+    if (!newMessage.trim() || isLoading) return;
 
     const userMessage = {
       id: Date.now(),
@@ -62,35 +25,61 @@ const CommunityChat = () => {
     setMessages(prev => [...prev, userMessage]);
     const messageToSend = newMessage.trim();
     setNewMessage('');
+    setIsLoading(true);
 
-    // Call backend
     try {
-      const res = await fetch('/api/chat', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ message: messageToSend })
+      const response = await fetch("https://api.anthropic.com/v1/messages", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          model: "claude-sonnet-4-20250514",
+          max_tokens: 1000,
+          system: "You are a helpful community assistant for a local community center. Be friendly, concise, and helpful. Provide information about services, events, gym facilities, and general community support. Keep responses brief and conversational.",
+          messages: [
+            { role: "user", content: messageToSend }
+          ],
+        })
       });
 
-      const data = await res.json();
+      const data = await response.json();
+      
+      let replyText = "Sorry, I couldn't process that.";
+      if (data.content && data.content.length > 0) {
+        replyText = data.content
+          .map(item => (item.type === "text" ? item.text : ""))
+          .filter(Boolean)
+          .join("\n");
+      }
 
       const botReply = {
         id: Date.now() + 1,
         sender: 'bot',
-        text: data.reply || "Sorry, I couldn't process that.",
+        text: replyText,
         timestamp: new Date().toISOString()
       };
 
       setMessages(prev => [...prev, botReply]);
 
     } catch (error) {
-      console.error(error);
+      console.error('Chat error:', error);
       const errorReply = {
         id: Date.now() + 1,
         sender: 'bot',
-        text: "Sorry, I couldn't connect to the server. Please try again.",
+        text: "Sorry, I'm having trouble connecting right now. Please try again in a moment.",
         timestamp: new Date().toISOString()
       };
       setMessages(prev => [...prev, errorReply]);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const handleKeyPress = (e) => {
+    if (e.key === 'Enter' && !e.shiftKey) {
+      e.preventDefault();
+      sendMessage();
     }
   };
 
@@ -98,7 +87,6 @@ const CommunityChat = () => {
     scrollToBottom();
   }, [messages]);
 
-  // Format timestamp
   const formatTime = (timestamp) => {
     const date = new Date(timestamp);
     return date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
@@ -106,7 +94,6 @@ const CommunityChat = () => {
 
   return (
     <div className="fixed bottom-4 right-4 z-50">
-      {/* Chat Toggle Button */}
       {!isOpen && (
         <button
           onClick={() => setIsOpen(true)}
@@ -117,14 +104,12 @@ const CommunityChat = () => {
         </button>
       )}
 
-      {/* Chat Window */}
       {isOpen && (
         <div className="bg-white rounded-lg shadow-2xl w-96 h-[500px] flex flex-col overflow-hidden border-2 border-red-600">
-          {/* Header */}
           <div className="bg-red-600 text-white p-4 flex items-center justify-between">
             <div className="flex items-center gap-2">
               <MessageCircle size={24} />
-              <h3 className="font-bold">Chat Assistant</h3>
+              <h3 className="font-bold">Community Assistant</h3>
             </div>
             <button
               onClick={() => setIsOpen(false)}
@@ -134,12 +119,12 @@ const CommunityChat = () => {
             </button>
           </div>
 
-          {/* Messages Area */}
           <div className="flex-1 overflow-y-auto p-4 bg-gray-50">
             {messages.length === 0 ? (
               <div className="text-center text-gray-500 mt-8">
                 <MessageCircle size={48} className="mx-auto mb-2 opacity-50" />
-                <p>Start a conversation! Ask me anything.</p>
+                <p className="text-sm">Hi! I'm your community assistant.</p>
+                <p className="text-xs mt-2">Ask me about services, events, gym facilities, or anything else!</p>
               </div>
             ) : (
               messages.map((msg) => (
@@ -156,34 +141,47 @@ const CommunityChat = () => {
                         : 'bg-white text-gray-800 border border-gray-200'
                     }`}
                   >
-                    <p className="break-words">{msg.text}</p>
+                    <p className="break-words text-sm">{msg.text}</p>
+                    <p className={`text-xs mt-1 ${
+                      msg.sender === 'user' ? 'text-red-100' : 'text-gray-400'
+                    }`}>
+                      {formatTime(msg.timestamp)}
+                    </p>
                   </div>
                 </div>
               ))
             )}
+            {isLoading && (
+              <div className="text-left mb-3">
+                <div className="inline-block bg-white text-gray-800 border border-gray-200 px-4 py-2 rounded-lg">
+                  <Loader2 className="animate-spin" size={20} />
+                </div>
+              </div>
+            )}
             <div ref={messagesEndRef} />
           </div>
 
-          {/* Message Input */}
-          <form onSubmit={sendMessage} className="p-4 bg-white border-t">
+          <div className="p-4 bg-white border-t">
             <div className="flex gap-2">
               <input
                 type="text"
                 value={newMessage}
                 onChange={(e) => setNewMessage(e.target.value)}
+                onKeyPress={handleKeyPress}
                 placeholder="Type a message..."
-                className="flex-1 px-4 py-2 border-2 border-gray-300 rounded-lg focus:border-red-600 focus:outline-none"
+                className="flex-1 px-4 py-2 border-2 border-gray-300 rounded-lg focus:border-red-600 focus:outline-none text-sm"
                 maxLength={500}
+                disabled={isLoading}
               />
               <button
-                type="submit"
-                disabled={!newMessage.trim()}
+                onClick={sendMessage}
+                disabled={!newMessage.trim() || isLoading}
                 className="bg-red-600 text-white p-2 rounded-lg hover:bg-red-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
               >
-                <Send size={20} />
+                {isLoading ? <Loader2 className="animate-spin" size={20} /> : <Send size={20} />}
               </button>
             </div>
-          </form>
+          </div>
         </div>
       )}
     </div>
