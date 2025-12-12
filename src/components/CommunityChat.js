@@ -7,6 +7,9 @@ const CommunityChat = () => {
   const [isOpen, setIsOpen] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const messagesEndRef = useRef(null);
+  
+  // Backend API URL - update this with your actual backend URL
+  const API_BASE_URL = process.env.REACT_APP_API_URL;
 
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
@@ -28,35 +31,28 @@ const CommunityChat = () => {
     setIsLoading(true);
 
     try {
-      const response = await fetch("https://api.anthropic.com/v1/messages", {
-        method: "POST",
+      // Updated to match FastAPI backend structure with full URL
+      const response = await fetch(`${API_BASE_URL}/api/chat`, {
+        method: 'POST',
         headers: {
-          "Content-Type": "application/json",
+          'Content-Type': 'application/json',
         },
         body: JSON.stringify({
-          model: "claude-sonnet-4-20250514",
-          max_tokens: 1000,
-          system: "You are a helpful community assistant for a local community center. Be friendly, concise, and helpful. Provide information about services, events, gym facilities, and general community support. Keep responses brief and conversational.",
-          messages: [
-            { role: "user", content: messageToSend }
-          ],
+          message: messageToSend
         })
       });
 
-      const data = await response.json();
-      
-      let replyText = "Sorry, I couldn't process that.";
-      if (data.content && data.content.length > 0) {
-        replyText = data.content
-          .map(item => (item.type === "text" ? item.text : ""))
-          .filter(Boolean)
-          .join("\n");
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}));
+        throw new Error(errorData.detail?.message || `HTTP error! status: ${response.status}`);
       }
 
+      const data = await response.json();
+      
       const botReply = {
         id: Date.now() + 1,
         sender: 'bot',
-        text: replyText,
+        text: data.reply || "Sorry, I couldn't process that.",
         timestamp: new Date().toISOString()
       };
 
@@ -67,7 +63,7 @@ const CommunityChat = () => {
       const errorReply = {
         id: Date.now() + 1,
         sender: 'bot',
-        text: "Sorry, I'm having trouble connecting right now. Please try again in a moment.",
+        text: `Sorry, I'm having trouble connecting right now. ${error.message}`,
         timestamp: new Date().toISOString()
       };
       setMessages(prev => [...prev, errorReply]);
