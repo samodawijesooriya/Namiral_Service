@@ -48,7 +48,7 @@ const CommunityChat = () => {
   };
 
   // Send message and get auto-reply
-  const sendMessage = (e) => {
+  const sendMessage = async (e) => {
     e.preventDefault();
     if (!newMessage.trim()) return;
 
@@ -59,16 +59,39 @@ const CommunityChat = () => {
       timestamp: new Date().toISOString()
     };
 
-    const replyText = getAutoReply(newMessage);
-    const botReply = {
-      id: Date.now() + 1,
-      sender: 'bot',
-      text: replyText,
-      timestamp: new Date().toISOString()
-    };
-
-    setMessages(prev => [...prev, userMessage, botReply]);
+    setMessages(prev => [...prev, userMessage]);
+    const messageToSend = newMessage.trim();
     setNewMessage('');
+
+    // Call backend
+    try {
+      const res = await fetch('/api/chat', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ message: messageToSend })
+      });
+
+      const data = await res.json();
+
+      const botReply = {
+        id: Date.now() + 1,
+        sender: 'bot',
+        text: data.reply || "Sorry, I couldn't process that.",
+        timestamp: new Date().toISOString()
+      };
+
+      setMessages(prev => [...prev, botReply]);
+
+    } catch (error) {
+      console.error(error);
+      const errorReply = {
+        id: Date.now() + 1,
+        sender: 'bot',
+        text: "Sorry, I couldn't connect to the server. Please try again.",
+        timestamp: new Date().toISOString()
+      };
+      setMessages(prev => [...prev, errorReply]);
+    }
   };
 
   useEffect(() => {
