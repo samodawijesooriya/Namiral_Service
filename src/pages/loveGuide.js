@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { Heart, ArrowLeft, Sparkles, Gift, MessageCircle, Smile, Star } from 'lucide-react';
 import Navbar from '../components/Navbar';
 import Footer from '../components/Footer';
+import LoveChatbot from '../components/LoveChatbot';
 import { useNavigate } from 'react-router-dom';
 
 const LoveGuide = () => {
@@ -453,6 +454,9 @@ const LoveGuide = () => {
       </div>
 
       <Footer />
+      
+      {/* Love Chatbot */}
+      <LoveChatbot />
     </div>
   );
 };
